@@ -71,6 +71,7 @@ jobs:
             ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_URI }}:${{ env.IMAGE_TAG }}
           push: false
+          load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
