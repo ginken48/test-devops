@@ -1,0 +1,51 @@
+services:
+  statsd:
+    image: graphiteapp/graphite-statsd:latest
+    container_name: statsd-prod
+    ports:
+      - "8125:8125/udp"
+      - "8126:8126"
+      - "8081:80"
+    volumes:
+      - statsd_data_prod:/opt/graphite/storage
+      - statsd_logs_prod:/var/log
+    environment:
+      - STATSD_INTERFACE=udp
+      - STATSD_PORT=8125
+    networks:
+      - test-network-prod
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8081 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: test-devops-app-prod
+    depends_on:
+      statsd:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - STATSD_HOST=statsd
+      - STATSD_PORT=8125
+    networks:
+      - test-network-prod
+    restart: unless-stopped
+
+volumes:
+  statsd_data_prod:
+    driver: local
+  statsd_logs_prod:
+    driver: local
+
+networks:
+  teset-network-prod:
+    driver: bridge
+
